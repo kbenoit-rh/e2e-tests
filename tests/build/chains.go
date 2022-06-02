@@ -2,6 +2,7 @@ package build
 
 import (
 	"fmt"
+	"strings"
 	"time"
 
 	"github.com/devfile/library/pkg/util"
@@ -131,6 +132,7 @@ var _ = framework.ChainsSuiteDescribe("Tekton Chains E2E tests", func() {
 				// to password and private key are not needed.
 				publicKey, err := kubeController.GetPublicKey("signing-secrets", "tekton-chains")
 				Expect(err).ToNot(HaveOccurred())
+				g.GinkgoWriter.Println("Copy public key from tekton-chains/signing-secrets to a new secret")
 				Expect(kubeController.CreateOrUpdateSigningSecret(
 					publicKey, publicSecretName, namespace)).To(Succeed())
 
@@ -151,21 +153,28 @@ var _ = framework.ChainsSuiteDescribe("Tekton Chains E2E tests", func() {
 
 				// Since specs could update the config policy, make sure it has a consistent
 				// baseline at the start of each spec.
+				var baselinePolicies = []string{"not_useful"}
+				g.GinkgoWriter.Printf("Set the non-blocking checks to baseline policies: %s\n", strings.Join(baselinePolicies, ", "))
 				Expect(kubeController.CreateOrUpdateConfigPolicy(
 					namespace, `{"non_blocking_checks":["not_useful"]}`)).To(Succeed())
 			})
 
 			g.It("succeeds when policy is met", func() {
 				// Setup a policy config to ignore the policy check for tests
+				var policies = []string{"not_useful", "test"}
+				g.GinkgoWriter.Printf("Set the non-blocking checks to policies: %s\n", strings.Join(policies, ", "))
 				Expect(kubeController.CreateOrUpdateConfigPolicy(
 					namespace, `{"non_blocking_checks":["not_useful", "test"]}`)).To(Succeed())
 				tr, err := kubeController.RunTask(taskGenerator, taskTimeout)
+				g.GinkgoWriter.Printf("Running task \"%s\"\n", tr.Name)
 				Expect(err).NotTo(HaveOccurred())
+				g.GinkgoWriter.Printf("Waiting for task \"%s\" to finish\n", tr.Name)
 				Expect(kubeController.WatchTaskPod(tr.Name, taskTimeout)).To(Succeed())
 
 				// Refresh our copy of the TaskRun for latest results
 				tr, err = kubeController.Tektonctrl.GetTaskRun(tr.Name, tr.Namespace)
 				Expect(err).NotTo(HaveOccurred())
+				g.GinkgoWriter.Printf("Make sure task \"%s\" has passed\n", tr.Name)
 				Expect(tr.Status.TaskRunResults).To(Equal([]v1beta1.TaskRunResult{
 					{Name: "OUTPUT", Value: "[]\n"},
 					{Name: "PASSED", Value: "true\n"},
@@ -175,12 +184,15 @@ var _ = framework.ChainsSuiteDescribe("Tekton Chains E2E tests", func() {
 			g.It("does not pass when tests are not satisfied on non-strict mode", func() {
 				taskGenerator.StrictPolicy = "0"
 				tr, err := kubeController.RunTask(taskGenerator, taskTimeout)
+				g.GinkgoWriter.Printf("Running task \"%s\" in non-strict mode\n", tr.Name)
 				Expect(err).NotTo(HaveOccurred())
+				g.GinkgoWriter.Printf("Waiting for task \"%s\" to finish\n", tr.Name)
 				Expect(kubeController.WatchTaskPod(tr.Name, taskTimeout)).To(Succeed())
 
 				// Refresh our copy of the TaskRun for latest results
 				tr, err = kubeController.Tektonctrl.GetTaskRun(tr.Name, tr.Namespace)
 				Expect(err).NotTo(HaveOccurred())
+				g.GinkgoWriter.Printf("Make sure task \"%s\" has failed\n", tr.Name)
 				Expect(tr.Status.TaskRunResults).To(Equal([]v1beta1.TaskRunResult{
 					{Name: "OUTPUT", Value: "[\n  {\n    \"code\": \"test_data_missing\",\n    \"msg\": \"No test data found\"\n  }\n]\n"},
 					{Name: "PASSED", Value: "false\n"},
@@ -189,13 +201,16 @@ var _ = framework.ChainsSuiteDescribe("Tekton Chains E2E tests", func() {
 
 			g.It("fails when tests are not satisfied on strict mode", func() {
 				tr, err := kubeController.RunTask(taskGenerator, taskTimeout)
+				g.GinkgoWriter.Printf("Running task \"%s\"\n", tr.Name)
 				Expect(err).NotTo(HaveOccurred())
 				err = kubeController.WatchTaskPod(tr.Name, taskTimeout)
+				g.GinkgoWriter.Printf("Waiting for task \"%s\" to finish\n", tr.Name)
 				Expect(err).To(HaveOccurred())
 
 				// Refresh our copy of the TaskRun for latest results
 				tr, err = kubeController.Tektonctrl.GetTaskRun(tr.Name, tr.Namespace)
 				Expect(err).NotTo(HaveOccurred())
+				g.GinkgoWriter.Printf("Make sure task \"%s\" has failed\n", tr.Name)
 				Expect(tr.IsSuccessful()).To(BeFalse())
 				// Because the task fails, no results are created
 			})
@@ -206,17 +221,21 @@ var _ = framework.ChainsSuiteDescribe("Tekton Chains E2E tests", func() {
 					"MFkwEwYHKoZIzj0CAQYIKoZIzj0DAQcDQgAENZxkE/d0fKvJ51dXHQmxXaRMTtVz\n" +
 					"BQWcmJD/7pcMDEmBcmk8O1yUPIiFj5TMZqabjS9CQQN+jKHG+Bfi0BYlHg==\n" +
 					"-----END PUBLIC KEY-----")
+				g.GinkgoWriter.Println("Create an invalid public signing key")
 				Expect(kubeController.CreateOrUpdateSigningSecret(publicKey, secretName, namespace)).To(Succeed())
 				taskGenerator.PublicSecret = fmt.Sprintf("k8s://%s/%s", namespace, secretName)
 
 				tr, err := kubeController.RunTask(taskGenerator, taskTimeout)
+				g.GinkgoWriter.Printf("Running task \"%s\"\n", tr.Name)
 				Expect(err).NotTo(HaveOccurred())
+				g.GinkgoWriter.Printf("Waiting for task \"%s\" to finish\n", tr.Name)
 				err = kubeController.WatchTaskPod(tr.Name, taskTimeout)
 				Expect(err).To(HaveOccurred())
 
 				// Refresh our copy of the TaskRun for latest results
 				tr, err = kubeController.Tektonctrl.GetTaskRun(tr.Name, tr.Namespace)
 				Expect(err).NotTo(HaveOccurred())
+				g.GinkgoWriter.Printf("Make sure task \"%s\" has failed\n", tr.Name)
 				Expect(tr.IsSuccessful()).To(BeFalse())
 				// Because the task fails, no results are created
 			})
