@@ -182,7 +182,9 @@ var _ = framework.ChainsSuiteDescribe("Tekton Chains E2E tests", func() {
 				Expect(kubeController.WatchTaskPod(tr.Name, taskTimeout)).To(Succeed())
 =======
 				pr, err := kubeController.RunPipeline(generator, pipelineRunTimeout)
+				g.GinkgoWriter.Printf("Running pipeline %s\n", pr.Name)
 				Expect(err).NotTo(HaveOccurred())
+				g.GinkgoWriter.Printf("Waiting for pipeline %s to finish\n", pr.Name)
 				Expect(kubeController.WatchPipelineRun(pr.Name, pipelineRunTimeout)).To(Succeed())
 >>>>>>> c12c825 (feat: use pipeline image from config map (#86))
 
@@ -225,7 +227,9 @@ var _ = framework.ChainsSuiteDescribe("Tekton Chains E2E tests", func() {
 				}
 				generator.StrictPolicy = "0"
 				pr, err := kubeController.RunPipeline(generator, pipelineRunTimeout)
+				g.GinkgoWriter.Printf("Running pipeline %s in non-strict mode\n", pr.Name)
 				Expect(err).NotTo(HaveOccurred())
+				g.GinkgoWriter.Printf("Waiting for pipeline %s to finish\n", pr.Name)
 				Expect(kubeController.WatchPipelineRun(pr.Name, pipelineRunTimeout)).To(Succeed())
 >>>>>>> c12c825 (feat: use pipeline image from config map (#86))
 
@@ -275,8 +279,10 @@ var _ = framework.ChainsSuiteDescribe("Tekton Chains E2E tests", func() {
 					g.Skip(skipContractMsg)
 				}
 				pr, err := kubeController.RunPipeline(generator, pipelineRunTimeout)
+				g.GinkgoWriter.Printf("Running pipeline %s\n", pr.Name)
 				Expect(err).NotTo(HaveOccurred())
 				err = kubeController.WatchPipelineRun(pr.Name, pipelineRunTimeout)
+				g.GinkgoWriter.Printf("Waiting for pipeline %s to finish\n", pr.Name)
 				Expect(err).NotTo(HaveOccurred())
 >>>>>>> c12c825 (feat: use pipeline image from config map (#86))
 
@@ -316,7 +322,9 @@ var _ = framework.ChainsSuiteDescribe("Tekton Chains E2E tests", func() {
 				Expect(err).To(HaveOccurred())
 =======
 				pr, err := kubeController.RunPipeline(generator, pipelineRunTimeout)
+				g.GinkgoWriter.Printf("Running pipeline %s\n", pr.Name)
 				Expect(err).NotTo(HaveOccurred())
+				g.GinkgoWriter.Printf("Waiting for pipeline %s to finish\n", pr.Name)
 				err = kubeController.WatchPipelineRun(pr.Name, pipelineRunTimeout)
 				Expect(err).NotTo(HaveOccurred())
 >>>>>>> c12c825 (feat: use pipeline image from config map (#86))
