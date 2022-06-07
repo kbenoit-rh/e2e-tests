@@ -8,6 +8,7 @@ import (
 	"github.com/devfile/library/pkg/util"
 	"github.com/redhat-appstudio/e2e-tests/pkg/constants"
 	"github.com/redhat-appstudio/e2e-tests/pkg/utils/tekton"
+	"github.com/tektoncd/pipeline/pkg/apis/pipeline/v1beta1"
 
 	g "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
@@ -174,24 +175,15 @@ var _ = framework.ChainsSuiteDescribe("Tekton Chains E2E tests", func() {
 				g.GinkgoWriter.Printf("Set the non-blocking checks to policies: %s\n", strings.Join(policies, ", "))
 				Expect(kubeController.CreateOrUpdateConfigPolicy(
 					namespace, `{"non_blocking_checks":["not_useful", "test"]}`)).To(Succeed())
-<<<<<<< HEAD
 				tr, err := kubeController.RunTask(taskGenerator, taskTimeout)
 				g.GinkgoWriter.Printf("Running task \"%s\"\n", tr.Name)
 				Expect(err).NotTo(HaveOccurred())
 				g.GinkgoWriter.Printf("Waiting for task \"%s\" to finish\n", tr.Name)
 				Expect(kubeController.WatchTaskPod(tr.Name, taskTimeout)).To(Succeed())
-=======
-				pr, err := kubeController.RunPipeline(generator, pipelineRunTimeout)
-				g.GinkgoWriter.Printf("Running pipeline %s\n", pr.Name)
-				Expect(err).NotTo(HaveOccurred())
-				g.GinkgoWriter.Printf("Waiting for pipeline %s to finish\n", pr.Name)
-				Expect(kubeController.WatchPipelineRun(pr.Name, pipelineRunTimeout)).To(Succeed())
->>>>>>> c12c825 (feat: use pipeline image from config map (#86))
 
 				// Refresh our copy of the PipelineRun for latest results
 				pr, err = kubeController.Tektonctrl.GetPipelineRun(pr.Name, pr.Namespace)
 				Expect(err).NotTo(HaveOccurred())
-<<<<<<< HEAD
 				g.GinkgoWriter.Printf("Make sure task \"%s\" has passed\n", tr.Name)
 				Expect(tr.Status.TaskRunResults).To(Equal([]v1beta1.TaskRunResult{
 					{Name: "OUTPUT", Value: "[]\n"},
@@ -206,37 +198,10 @@ var _ = framework.ChainsSuiteDescribe("Tekton Chains E2E tests", func() {
 				Expect(err).NotTo(HaveOccurred())
 				g.GinkgoWriter.Printf("Waiting for task \"%s\" to finish\n", tr.Name)
 				Expect(kubeController.WatchTaskPod(tr.Name, taskTimeout)).To(Succeed())
-=======
-				tr, err := kubeController.GetTaskRunStatus(pr, "verify-enterprise-contract")
-				Expect(err).NotTo(HaveOccurred())
-				Expect(tr.Status.TaskRunResults).Should(ContainElements(
-					tekton.MatchTaskRunResultWithJSONValue("OUTPUT", `[
-						{
-							"filename": "/shared/ec-work-dir/input/input.json",
-							"namespace": "main",
-							"successes": 1
-						}
-					]`),
-					tekton.MatchTaskRunResult("PASSED", "true"),
-				))
-			})
-
-			g.It("does not pass when tests are not satisfied on non-strict mode", func() {
-				if skipContract {
-					g.Skip(skipContractMsg)
-				}
-				generator.StrictPolicy = "0"
-				pr, err := kubeController.RunPipeline(generator, pipelineRunTimeout)
-				g.GinkgoWriter.Printf("Running pipeline %s in non-strict mode\n", pr.Name)
-				Expect(err).NotTo(HaveOccurred())
-				g.GinkgoWriter.Printf("Waiting for pipeline %s to finish\n", pr.Name)
-				Expect(kubeController.WatchPipelineRun(pr.Name, pipelineRunTimeout)).To(Succeed())
->>>>>>> c12c825 (feat: use pipeline image from config map (#86))
 
 				// Refresh our copy of the PipelineRun for latest results
 				pr, err = kubeController.Tektonctrl.GetPipelineRun(pr.Name, pr.Namespace)
 				Expect(err).NotTo(HaveOccurred())
-<<<<<<< HEAD
 				g.GinkgoWriter.Printf("Make sure task \"%s\" has failed\n", tr.Name)
 				Expect(tr.Status.TaskRunResults).To(Equal([]v1beta1.TaskRunResult{
 					{Name: "OUTPUT", Value: "[\n  {\n    \"code\": \"test_data_missing\",\n    \"msg\": \"No test data found\"\n  }\n]\n"},
@@ -251,52 +216,12 @@ var _ = framework.ChainsSuiteDescribe("Tekton Chains E2E tests", func() {
 				err = kubeController.WatchTaskPod(tr.Name, taskTimeout)
 				g.GinkgoWriter.Printf("Waiting for task \"%s\" to finish\n", tr.Name)
 				Expect(err).To(HaveOccurred())
-=======
-				tr, err := kubeController.GetTaskRunStatus(pr, "verify-enterprise-contract")
-				Expect(err).NotTo(HaveOccurred())
-				Expect(tr.Status.TaskRunResults).Should(ContainElements(
-					tekton.MatchTaskRunResultWithJSONValue("OUTPUT", `[
-						{
-							"filename": "/shared/ec-work-dir/input/input.json",
-							"namespace": "main",
-							"successes": 0,
-							"failures": [
-								{
-									"msg": "No test data found",
-									"metadata": {
-										"code": "test_data_missing"
-									}					
-								}
-							]
-						}
-					]`),
-					tekton.MatchTaskRunResult("PASSED", "false"),
-				))
-			})
-
-			g.It("fails when tests are not satisfied on strict mode", func() {
-				if skipContract {
-					g.Skip(skipContractMsg)
-				}
-				pr, err := kubeController.RunPipeline(generator, pipelineRunTimeout)
-				g.GinkgoWriter.Printf("Running pipeline %s\n", pr.Name)
-				Expect(err).NotTo(HaveOccurred())
-				err = kubeController.WatchPipelineRun(pr.Name, pipelineRunTimeout)
-				g.GinkgoWriter.Printf("Waiting for pipeline %s to finish\n", pr.Name)
-				Expect(err).NotTo(HaveOccurred())
->>>>>>> c12c825 (feat: use pipeline image from config map (#86))
 
 				// Refresh our copy of the PipelineRun for latest results
 				pr, err = kubeController.Tektonctrl.GetPipelineRun(pr.Name, pr.Namespace)
 				Expect(err).NotTo(HaveOccurred())
-<<<<<<< HEAD
 				g.GinkgoWriter.Printf("Make sure task \"%s\" has failed\n", tr.Name)
 				Expect(tr.IsSuccessful()).To(BeFalse())
-=======
-				tr, err := kubeController.GetTaskRunStatus(pr, "verify-enterprise-contract")
-				Expect(err).NotTo(HaveOccurred())
-				Expect(tr.Status.GetCondition("Succeeded").IsTrue()).To(BeFalse())
->>>>>>> c12c825 (feat: use pipeline image from config map (#86))
 				// Because the task fails, no results are created
 			})
 
@@ -313,33 +238,18 @@ var _ = framework.ChainsSuiteDescribe("Tekton Chains E2E tests", func() {
 				Expect(kubeController.CreateOrUpdateSigningSecret(publicKey, secretName, namespace)).To(Succeed())
 				generator.PublicSecret = fmt.Sprintf("k8s://%s/%s", namespace, secretName)
 
-<<<<<<< HEAD
 				tr, err := kubeController.RunTask(taskGenerator, taskTimeout)
 				g.GinkgoWriter.Printf("Running task \"%s\"\n", tr.Name)
 				Expect(err).NotTo(HaveOccurred())
 				g.GinkgoWriter.Printf("Waiting for task \"%s\" to finish\n", tr.Name)
 				err = kubeController.WatchTaskPod(tr.Name, taskTimeout)
 				Expect(err).To(HaveOccurred())
-=======
-				pr, err := kubeController.RunPipeline(generator, pipelineRunTimeout)
-				g.GinkgoWriter.Printf("Running pipeline %s\n", pr.Name)
-				Expect(err).NotTo(HaveOccurred())
-				g.GinkgoWriter.Printf("Waiting for pipeline %s to finish\n", pr.Name)
-				err = kubeController.WatchPipelineRun(pr.Name, pipelineRunTimeout)
-				Expect(err).NotTo(HaveOccurred())
->>>>>>> c12c825 (feat: use pipeline image from config map (#86))
 
 				// Refresh our copy of the PipelineRun for latest results
 				pr, err = kubeController.Tektonctrl.GetPipelineRun(pr.Name, pr.Namespace)
 				Expect(err).NotTo(HaveOccurred())
-<<<<<<< HEAD
 				g.GinkgoWriter.Printf("Make sure task \"%s\" has failed\n", tr.Name)
 				Expect(tr.IsSuccessful()).To(BeFalse())
-=======
-				tr, err := kubeController.GetTaskRunStatus(pr, "verify-enterprise-contract")
-				Expect(err).NotTo(HaveOccurred())
-				Expect(tr.Status.GetCondition("Succeeded").IsTrue()).To(BeFalse())
->>>>>>> c12c825 (feat: use pipeline image from config map (#86))
 				// Because the task fails, no results are created
 			})
 		})
